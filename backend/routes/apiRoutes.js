@@ -14,8 +14,8 @@ router.get('/commits', async (req, res) => {
         if (!isValid) {
             return res.status(400).json({ error: 'This aint a git repository lil bro' });
         }
-        const commits = await analyzer.getCommitHistory();
-        res.json({ commits, repository: repoPath });
+        const { commits, pathPrefix } = await analyzer.getCommitHistory();
+        res.json({ commits, pathPrefix, repository: repoPath });
     } catch (error) {
         console.log("hi hello");
         console.error('Error fetching commits:', error);

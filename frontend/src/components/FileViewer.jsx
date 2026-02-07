@@ -22,9 +22,18 @@ hljs.registerLanguage('markdown', markdown);
 hljs.registerLanguage('python', python);
 hljs.registerLanguage('bash', bash);
 
-export default function FileViewer({ content, filePath }) {
+export default function FileViewer({ content, filePath, diff }) {
     const [copied, setCopied] = useState(false);
     const [highlightedCode, setHighlightedCode] = useState('');
+    const [viewMode, setViewMode] = useState('raw'); // 'raw' or 'diff'
+
+    useEffect(() => {
+        if (diff && diff.files?.length > 0) {
+            setViewMode('diff');
+        } else {
+            setViewMode('raw');
+        }
+    }, [diff]);
 
     const handleCopy = async () => {
         if (content) {
@@ -64,52 +73,103 @@ export default function FileViewer({ content, filePath }) {
     };
 
     useEffect(() => {
-        if (!content) {
-            setHighlightedCode('');
-            return;
-        }
+        if (viewMode === 'diff' && diff && diff.files?.length > 0) {
+            const lang = getLanguageFromPath(filePath);
+            const fileDiff = diff.files[0];
+            let html = '';
+            let lineNum = 0;
 
-        const lang = getLanguageFromPath(filePath);
-        let html = '';
+            fileDiff.hunks.forEach(hunk => {
+                // Hunk header
+                html += `<div class="bg-blue-900/20 text-blue-400/60 py-1 px-4 text-xs font-mono select-none border-y border-blue-900/30 my-1">${hunk.header}</div>`;
 
-        try {
-            if (lang && hljs.getLanguage(lang)) {
-                html = hljs.highlight(content, { language: lang }).value;
-            } else {
-                html = hljs.highlightAuto(content).value;
+                hunk.changes.forEach(change => {
+                    let lineHtml = '';
+                    try {
+                        if (lang && hljs.getLanguage(lang)) {
+                            lineHtml = hljs.highlight(change.content, { language: lang }).value;
+                        } else {
+                            lineHtml = change.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        }
+                    } catch (e) {
+                        lineHtml = change.content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                    }
+
+                    const bgClass = change.type === 'addition' ? 'bg-green-900/30 border-l-4 border-green-500' :
+                        change.type === 'deletion' ? 'bg-red-900/30 border-l-4 border-red-500' :
+                            'hover:bg-white/5';
+                    const sign = change.type === 'addition' ? '+' : change.type === 'deletion' ? '-' : ' ';
+                    const signColor = change.type === 'addition' ? 'text-green-400' : change.type === 'deletion' ? 'text-red-400' : 'text-gray-600';
+
+                    html += `<div class="flex ${bgClass} transition-colors group">
+                        <span class="select-none text-gray-600 text-right pr-2 w-10 flex-shrink-0 text-[10px] leading-6">${change.type === 'deletion' ? '-' : ++lineNum}</span>
+                        <span class="select-none ${signColor} w-4 flex-shrink-0 text-center font-mono leading-6">${sign}</span>
+                        <span class="flex-1 whitespace-pre-wrap font-mono py-0.5 leading-6 pl-2">${lineHtml || ' '}</span>
+                    </div>`;
+                });
+            });
+            setHighlightedCode(html);
+        } else if (content) {
+            const lang = getLanguageFromPath(filePath);
+            let html = '';
+
+            try {
+                if (lang && hljs.getLanguage(lang)) {
+                    html = hljs.highlight(content, { language: lang }).value;
+                } else {
+                    html = hljs.highlightAuto(content).value;
+                }
+            } catch (e) {
+                html = content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             }
-        } catch (e) {
-            console.warn('Highlight info lookup failed, falling back to plaintext', e);
-            // Fallback for simple escaping if highlighting fails
-            html = content.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            const lines = html.split('\n');
+            const linesHtml = lines.map((line, index) =>
+                `<div class="flex hover:bg-white/5 transition-colors group">
+                    <span class="select-none text-gray-600 text-right pr-4 w-12 flex-shrink-0 text-[10px] leading-6">${index + 1}</span>
+                    <span class="flex-1 whitespace-pre-wrap font-mono py-0.5 leading-6">${line || ' '}</span>
+                </div>`
+            ).join('');
+
+            setHighlightedCode(linesHtml);
+        } else {
+            setHighlightedCode('');
         }
-
-        // Add line numbers
-        const lines = html.split('\n');
-        const linesHtml = lines.map((line, index) =>
-            `<div class="flex hover:bg-white/5">
-        <span class="select-none text-gray-600 text-right pr-4 w-12 flex-shrink-0">${index + 1}</span>
-        <span class="flex-1 whitespace-pre-wrap font-mono">${line || ' '}</span>
-      </div>`
-        ).join('');
-
-        setHighlightedCode(linesHtml);
-    }, [content, filePath]);
+    }, [content, filePath, diff, viewMode]);
 
     const detectedLang = getLanguageFromPath(filePath);
 
     return (
         <div className="bg-[#3d2d00] border border-white/10 rounded-xl h-full flex flex-col overflow-hidden shadow-2xl">
             {/* Status Bar */}
-            <div className="px-4 py-1 bg-[#2a1f00] border-t border-white/5 flex items-center justify-between flex-shrink-0">
-                <div className="min-w-0">
-                    <h3 className="font-mono text-sm text-gray-300 truncate">
-                        {filePath || 'No file selected'}
-                    </h3>
-                    {content && (
-                        <p className="text-xs text-gray-500 mt-1">
-                            {content.split('\n').length} lines • {detectedLang}
-                        </p>
+            <div className="px-4 py-2 bg-[#2a1f00] border-t border-white/5 flex items-center justify-between flex-shrink-0">
+                <div className="flex items-center gap-4 min-w-0">
+                    <div>
+                        <h3 className="font-mono text-sm text-gray-300 truncate">
+                            {filePath || 'No file selected'}
+                        </h3>
+                        {content && (
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                {content.split('\n').length} lines • {detectedLang}
+                            </p>
+                        )}
+                    </div>
+
+                    {diff && diff.files?.length > 0 && (
+                        <div className="flex items-center bg-black/40 rounded-lg p-0.5 border border-white/5 ml-2">
+                            <button
+                                onClick={() => setViewMode('raw')}
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${viewMode === 'raw' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                            >
+                                Raw
+                            </button>
+                            <button
+                                onClick={() => setViewMode('diff')}
+                                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all ${viewMode === 'diff' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                            >
+                                Diff
+                            </button>
+                        </div>
                     )}
                 </div>
                 {content && (

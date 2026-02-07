@@ -4,7 +4,7 @@ import FileTree from './FileTree';
 import FileViewer from './FileViewer';
 import Timeline from './Timeline';
 import { GitBranch, FolderGit2, Search, Settings, Loader2, Info } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 // --- MOCK DATA ---
 const MOCK_COMMITS = [
@@ -123,9 +123,23 @@ export default function Repo() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState(null);
     const [newdir, setNewdir] = useState('');
-
+    const [pathPrefix, setPathPrefix] = useState('');
+    const [diffData, setDiffData] = useState(null);
 
     const navigate = useNavigate();
+
+    const changedFiles = useMemo(() => {
+        const currentCommit = commits[currentIndex];
+        if (!currentCommit?.stats?.files) return new Set();
+
+        const files = currentCommit.stats.files;
+        const normalized = files
+            .filter(f => !pathPrefix || f.path.startsWith(pathPrefix + '/'))
+            .map(f => pathPrefix ? f.path.substring(pathPrefix.length + 1) : f.path);
+
+        return new Set(normalized);
+    }, [commits, currentIndex, pathPrefix]);
+
     const handleSearch = () => {
         if (newdir.trim()) {
             navigate(`/repo/${encodeURIComponent(newdir)}`);
@@ -149,6 +163,7 @@ export default function Repo() {
                 const data = await response.json();
                 const commitsData = data.commits || [];
                 setCommits(commitsData);
+                setPathPrefix(data.pathPrefix || '');
                 setIsMock(false);
                 if (commitsData.length > 0) {
                     setCurrentIndex(commitsData.length - 1);
@@ -193,28 +208,47 @@ export default function Repo() {
             return;
         }
 
-        const fetchFileContent = async () => {
+        const fetchFileData = async () => {
             const commit = commits[currentIndex];
+            const prevCommit = currentIndex > 0 ? commits[currentIndex - 1] : null;
+
             if (isMock) {
                 const content = MOCK_FILES[selectedFile]?.[commit.hash] || '// No mock content for this version';
                 setFileContent(content);
+                setDiffData(null); // Reset diff for mock
                 return;
             }
 
             try {
-                const response = await fetch(
+                // Fetch content
+                const contentResponse = await fetch(
                     `http://localhost:3000/api/file?repo=${encodeURIComponent(repoPath)}&commit=${commit.hash}&path=${encodeURIComponent(selectedFile)}`
                 );
-                if (!response.ok) throw new Error('Failed to fetch file content');
-                const data = await response.json();
-                setFileContent(data.content);
+                if (!contentResponse.ok) throw new Error('Failed to fetch file content');
+                const contentData = await contentResponse.json();
+                setFileContent(contentData.content);
+
+                // Fetch diff if not first commit
+                if (prevCommit) {
+                    const diffResponse = await fetch(
+                        `http://localhost:3000/api/diff?repo=${encodeURIComponent(repoPath)}&from=${prevCommit.hash}&to=${commit.hash}&path=${encodeURIComponent(selectedFile)}`
+                    );
+                    if (diffResponse.ok) {
+                        const dData = await diffResponse.json();
+                        setDiffData(dData.diff);
+                    } else {
+                        setDiffData(null);
+                    }
+                } else {
+                    setDiffData(null);
+                }
             } catch (err) {
-                console.log("gi")
                 console.error(err);
                 setFileContent('Error loading file content');
+                setDiffData(null);
             }
         };
-        fetchFileContent();
+        fetchFileData();
     }, [repoPath, commits, currentIndex, selectedFile, isMock]);
 
 
@@ -265,7 +299,9 @@ export default function Repo() {
             <header className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-b border-white/5 gap-4 flex-shrink-0">
                 <div className="flex items-center gap-4 w-full md:w-auto">
                     <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20 flex-shrink-0">
-                        <FolderGit2 size={24} />
+                        <Link to="/">
+                            <FolderGit2 size={24} />
+                        </Link>
                     </div>
                     <div className="min-w-0">
                         <div className="flex items-center gap-2">
@@ -303,29 +339,24 @@ export default function Repo() {
                         <GitBranch size={16} className="text-primary-400" />
                         <span className="font-mono">main</span>
                     </div>
-                    <button
-                        onClick={handleSearch}
-                        className="p-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full shadow-lg shadow-primary-500/20 transition-all active:scale-95"
-                        title="Analyze Repository"
-                    >
-                        <Search size={20} />
-                    </button>
                 </div>
             </header>
 
-            <main className="flex-1 flex overflow-hidden p-6 gap-6">
-                <aside className="w-80 flex-shrink-0">
+            <main className="flex-1 flex flex-col md:flex-row overflow-hidden p-4 md:p-6 gap-4 md:gap-6">
+                <aside className="w-full md:w-80 flex-shrink-0 flex flex-col min-h-0">
                     <FileTree
                         tree={tree}
                         onFileSelect={handleFileSelect}
                         selectedFile={selectedFile}
+                        changedFiles={changedFiles}
                     />
                 </aside>
 
-                <section className="flex-1 min-w-0">
+                <section className="flex-1 min-w-0 flex flex-col min-h-0">
                     <FileViewer
                         content={fileContent}
                         filePath={selectedFile}
+                        diff={diffData}
                     />
                 </section>
             </main>

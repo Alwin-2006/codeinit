@@ -6,12 +6,13 @@ class GitAnalyzer {
     constructor(repoPath) {
         this.repoPath = repoPath;
         this.git = simpleGit(repoPath);
-        this.pathPrefix = null; 
+        this.pathPrefix = null;
     }
 
     // fetches the commit history
     async getCommitHistory() {
         try {
+            await this.detectPathPrefix();
             const log = await this.git.log(['--all', '--date-order', '--reverse']);
 
             const commits = await Promise.all(
@@ -36,7 +37,10 @@ class GitAnalyzer {
                 })
             );
 
-            return commits;
+            return {
+                commits,
+                pathPrefix: this.pathPrefix
+            };
         } catch (error) {
             throw new Error(`Failed to get commit history: ${error.message}`);
         }
@@ -90,7 +94,7 @@ class GitAnalyzer {
         }
     }
 
-    
+
     async getFileTree(commitHash) {
         try {
             await this.detectPathPrefix();
@@ -183,7 +187,7 @@ class GitAnalyzer {
         }
     }
 
-   
+
     async getDiff(fromCommit, toCommit, filePath = null) {
         try {
             const args = ['diff', fromCommit, toCommit];
@@ -198,7 +202,7 @@ class GitAnalyzer {
         }
     }
 
-    
+
     parseDiff(diffOutput) {
         const files = [];
         const fileBlocks = diffOutput.split('diff --git');
@@ -261,14 +265,14 @@ class GitAnalyzer {
         }
     }
 
-    
+
     countFiles(node) {
         if (node.type === 'file') return 1;
         if (!node.children) return 0;
         return node.children.reduce((sum, child) => sum + this.countFiles(child), 0);
     }
 
-   
+
     async isValidRepo() {
         try {
             await this.git.status();
