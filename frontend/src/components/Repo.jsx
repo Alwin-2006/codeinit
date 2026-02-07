@@ -5,7 +5,7 @@ import FileViewer from './FileViewer';
 import Timeline from './Timeline';
 import { GitBranch, FolderGit2, Search, Settings, Loader2, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog.jsx";
+
 // --- MOCK DATA ---
 const MOCK_COMMITS = [
     {
