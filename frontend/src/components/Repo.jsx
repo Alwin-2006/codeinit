@@ -233,7 +233,7 @@ export default function Repo() {
 
     if (loading) {
         return (
-            <div className="h-screen flex items-center justify-center bg-dark-950 text-white">
+            <div className="h-screen flex items-center justify-center text-white">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="animate-spin text-primary-500" size={48} />
                     <p className="text-xl font-medium animate-pulse">Analyzing Repository History...</p>
@@ -243,9 +243,9 @@ export default function Repo() {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-dark-950 text-white overflow-hidden">
+        <div className="h-screen flex flex-col  text-white overflow-hidden">
             {/* Navbar */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/2 flex-shrink-0">
+            <header className="flex items-center justify-between px-6 py-4  border-white/10 flex-shrink-0">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
                         <FolderGit2 size={24} />
@@ -274,9 +274,6 @@ export default function Repo() {
                     </div>
                     <button className="p-2 hover:bg-white/5 rounded-lg transition-all">
                         <Search size={20} className="text-gray-400" />
-                    </button>
-                    <button className="p-2 hover:bg-white/5 rounded-lg transition-all">
-                        <Settings size={20} className="text-gray-400" />
                     </button>
                 </div>
             </header>

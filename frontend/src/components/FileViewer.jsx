@@ -99,9 +99,9 @@ export default function FileViewer({ content, filePath }) {
     const detectedLang = getLanguageFromPath(filePath);
 
     return (
-        <div className="glass rounded-xl h-full flex flex-col overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+        <div className="bg-[#3d2d00] border border-white/10 rounded-xl h-full flex flex-col overflow-hidden shadow-2xl">
+            {/* Status Bar */}
+            <div className="px-4 py-1 bg-[#2a1f00] border-t border-white/5 flex items-center justify-between flex-shrink-0">
                 <div className="min-w-0">
                     <h3 className="font-mono text-sm text-gray-300 truncate">
                         {filePath || 'No file selected'}
@@ -133,7 +133,7 @@ export default function FileViewer({ content, filePath }) {
                         />
                     </div>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="flex items-center justify-center h-full text-gray-600 bg-[#3d2d00]">
                         <div className="text-center">
                             <File className="mx-auto mb-4 opacity-20" size={48} />
                             <p>Select a file to view its contents</p>
