@@ -122,14 +122,12 @@ export default function Repo() {
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState(null);
 
-    // Fetch commits on mount
     useEffect(() => {
         const fetchCommits = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Try fetching from real API
                 const response = await fetch(`http://localhost:3000/repo/${encodeURIComponent(repoPath)}`);
                 if (!response.ok) throw new Error('Backend not reachable');
 
@@ -141,7 +139,6 @@ export default function Repo() {
                 }
             } catch (err) {
                 console.warn('Backend failed, falling back to mock data', err);
-                // Fallback to MOCK
                 setIsMock(true);
                 setCommits(MOCK_COMMITS);
                 setCurrentIndex(MOCK_COMMITS.length - 1);
@@ -152,7 +149,6 @@ export default function Repo() {
         fetchCommits();
     }, [repoPath]);
 
-    // Fetch tree when commit changes
     useEffect(() => {
         if (commits.length === 0) return;
 
@@ -175,7 +171,6 @@ export default function Repo() {
         fetchTree();
     }, [repoPath, commits, currentIndex, isMock]);
 
-    // Fetch file content when selected file changes or commit changes
     useEffect(() => {
         if (!selectedFile || commits.length === 0) {
             setFileContent(null);
@@ -205,7 +200,7 @@ export default function Repo() {
         fetchFileContent();
     }, [repoPath, commits, currentIndex, selectedFile, isMock]);
 
-    // Playback logic
+
     useEffect(() => {
         let interval;
         if (isPlaying && currentIndex < commits.length - 1) {
@@ -286,9 +281,7 @@ export default function Repo() {
                 </div>
             </header>
 
-            {/* Main Content Area */}
             <main className="flex-1 flex overflow-hidden p-6 gap-6">
-                {/* Left Sidebar - File Tree */}
                 <aside className="w-80 flex-shrink-0">
                     <FileTree
                         tree={tree}
@@ -297,7 +290,6 @@ export default function Repo() {
                     />
                 </aside>
 
-                {/* Center - File Viewer */}
                 <section className="flex-1 min-w-0">
                     <FileViewer
                         content={fileContent}
@@ -306,7 +298,6 @@ export default function Repo() {
                 </section>
             </main>
 
-            {/* Bottom Section - Timeline */}
             <footer className="p-6 pt-0 flex-shrink-0">
                 <Timeline
                     commits={commits}
