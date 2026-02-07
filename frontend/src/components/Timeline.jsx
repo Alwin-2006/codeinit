@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 export default function Timeline({ commits, currentIndex, onCommitChange, isPlaying, onPlayPause }) {
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -71,39 +72,35 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                 </div>
             </div>
 
-            {/* Timeline Progress Bar */}
-            <div className="space-y-2">
-                <div className="relative h-2 bg-dark-700 rounded-full overflow-hidden">
-                    <div
-                        className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary-600 to-purple-600 transition-all duration-300"
-                        style={{ width: `${progress}%` }}
-                    />
-                    {/* Commit markers */}
-                    <div className="absolute inset-0 flex justify-between px-1">
-                        {commits.map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => onCommitChange(index)}
-                                className={`w-1 h-2 rounded-full transition-all hover:scale-150 ${index === currentIndex
-                                    ? 'bg-white scale-150'
-                                    : index < currentIndex
-                                        ? 'bg-primary-400'
-                                        : 'bg-gray-600'
-                                    }`}
-                                title={`Commit ${index + 1}`}
-                            />
-                        ))}
-                    </div>
+            {/* Timeline Slider with Markers */}
+            <div className="relative pt-6 pb-2">
+                {/* Commit markers - positioned above/behind the slider */}
+                <div className="absolute top-0 inset-x-0 flex justify-between px-1 pointer-events-none">
+                    {commits.map((_, index) => (
+                        <div
+                            key={index}
+                            className={`w-1 h-3 rounded-full transition-all ${index === currentIndex
+                                ? 'bg-white scale-150 shadow-[0_0_8px_rgba(255,255,255,0.3)]'
+                                : index < currentIndex
+                                    ? 'bg-primary/80'
+                                    : 'bg-white/10'
+                                }`}
+                        />
+                    ))}
                 </div>
 
-                {/* Timeline Slider */}
-                <input
-                    type="range"
-                    min="0"
+                <Slider
+                    min={0}
                     max={commits.length - 1}
-                    value={currentIndex}
-                    onChange={(e) => onCommitChange(parseInt(e.target.value))}
-                    className="w-full h-1 bg-dark-700 rounded-lg appearance-none cursor-pointer slider"
+                    step={1}
+                    value={[currentIndex]}
+                    onValueChange={(vals) => onCommitChange(vals[0])}
+                    className="w-full cursor-pointer relative z-10"
+                    style={{
+                        "--color-primary": "#f34f29",
+                        "--color-muted": "rgba(243, 79, 41, 0.2)", // Translucent version of the same color for the track
+                        "--color-ring": "#f34f29"
+                    }}
                 />
             </div>
 
@@ -128,7 +125,7 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                     </button>
                     <button
                         onClick={onPlayPause}
-                        className="p-3 bg-primary-600 hover:bg-primary-700 rounded-lg transition-all"
+                        className="p-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-all"
                         title={isPlaying ? 'Pause' : 'Play'}
                     >
                         {isPlaying ? <Pause size={24} /> : <Play size={24} />}
