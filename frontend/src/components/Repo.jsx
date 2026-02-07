@@ -4,7 +4,8 @@ import FileTree from './FileTree';
 import FileViewer from './FileViewer';
 import Timeline from './Timeline';
 import { GitBranch, FolderGit2, Search, Settings, Loader2, Info } from 'lucide-react';
-
+import { useNavigate } from 'react-router-dom';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog.jsx";
 // --- MOCK DATA ---
 const MOCK_COMMITS = [
     {
@@ -121,21 +122,36 @@ export default function Repo() {
     const [fileContent, setFileContent] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [error, setError] = useState(null);
+    const [newdir, setNewdir] = useState('');
 
+
+    const navigate = useNavigate();
+    const handleSearch = () => {
+        if (newdir.trim()) {
+            navigate(`/repo/${encodeURIComponent(newdir)}`);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
     useEffect(() => {
         const fetchCommits = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                const response = await fetch(`http://localhost:3000/repo/${encodeURIComponent(repoPath)}`);
+                const response = await fetch(`http://localhost:3000/api/commits?repo=${encodeURIComponent(repoPath)}`);
                 if (!response.ok) throw new Error('Backend not reachable');
 
                 const data = await response.json();
-                setCommits(data);
+                const commitsData = data.commits || [];
+                setCommits(commitsData);
                 setIsMock(false);
-                if (data.length > 0) {
-                    setCurrentIndex(data.length - 1);
+                if (commitsData.length > 0) {
+                    setCurrentIndex(commitsData.length - 1);
                 }
             } catch (err) {
                 console.warn('Backend failed, falling back to mock data', err);
@@ -160,10 +176,10 @@ export default function Repo() {
             }
 
             try {
-                const response = await fetch(`http://localhost:3000/repo/${encodeURIComponent(repoPath)}/tree/${commit.hash}`);
+                const response = await fetch(`http://localhost:3000/api/tree?repo=${encodeURIComponent(repoPath)}&commit=${commit.hash}`);
                 if (!response.ok) throw new Error('Failed to fetch file tree');
                 const data = await response.json();
-                setTree(data);
+                setTree(data.tree);
             } catch (err) {
                 console.error(err);
             }
@@ -187,12 +203,13 @@ export default function Repo() {
 
             try {
                 const response = await fetch(
-                    `http://localhost:3000/repo/${encodeURIComponent(repoPath)}/file/${commit.hash}/${encodeURIComponent(selectedFile)}`
+                    `http://localhost:3000/api/file?repo=${encodeURIComponent(repoPath)}&commit=${commit.hash}&path=${encodeURIComponent(selectedFile)}`
                 );
                 if (!response.ok) throw new Error('Failed to fetch file content');
                 const data = await response.json();
                 setFileContent(data.content);
             } catch (err) {
+                console.log("gi")
                 console.error(err);
                 setFileContent('Error loading file content');
             }
@@ -267,6 +284,15 @@ export default function Repo() {
                     </div>
                 </div>
 
+
+                <input
+                    type="text"
+                    className="block w-3/4 pl-6 pr-6 py-3 bg-white border border-transparent rounded-full leading-5 text-black placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[var(--color-secondary)] focus:border-transparent text-xl shadow-2xl transition-all duration-300"
+                    placeholder="Eg. /home/user/Desktop/codeinit"
+                    value={newdir}
+                    onChange={(e) => setNewdir(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                />
                 <div className="flex items-center gap-3">
                     <div className="hidden md:flex items-center gap-2 px-4 py-2 glass rounded-full text-sm">
                         <GitBranch size={16} className="text-primary-400" />
