@@ -1,9 +1,45 @@
-import { useState } from 'react';
-import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Play, Pause, SkipBack, SkipForward, ChevronLeft, ChevronRight, Search as SearchIcon, Calendar } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
+import { Button } from "@/components/ui/button.jsx";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog.jsx";
+import { Input } from "@/components/ui/input.jsx";
+import { Label } from "@/components/ui/label.jsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
 
 export default function Timeline({ commits, currentIndex, onCommitChange, isPlaying, onPlayPause }) {
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [dateFilter, setDateFilter] = useState('');
+    const [authorFilter, setAuthorFilter] = useState('all');
+
+    const authors = useMemo(() => {
+        const uniqueAuthors = new Set(commits.map(c => c.author));
+        return Array.from(uniqueAuthors).sort();
+    }, [commits]);
+
+    const filteredCommits = useMemo(() => {
+        return commits.map((commit, index) => ({ ...commit, originalIndex: index }))
+            .filter(commit => {
+                const matchesSearch = commit.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    commit.shortHash.toLowerCase().includes(searchQuery.toLowerCase());
+
+                const matchesDate = !dateFilter || new Date(commit.timestamp) <= new Date(dateFilter);
+
+                const matchesAuthor = authorFilter === 'all' || commit.author === authorFilter;
+
+                return matchesSearch && matchesDate && matchesAuthor;
+            });
+    }, [commits, searchQuery, dateFilter, authorFilter]);
+
+    const handleCommitSelect = (index) => {
+        onCommitChange(index);
+        setIsDialogOpen(false);
+        setSearchQuery('');
+        setDateFilter('');
+        setAuthorFilter('all');
+    };
 
     const handlePrevious = () => {
         if (currentIndex > 0) {
@@ -63,6 +99,106 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                             {currentCommit.stats.filesChanged} file(s) changed
                         </p>
                     )}
+                </div>
+                <div>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="gap-2 glass-dark border-white/10 hover:bg-white/5">
+                                <SearchIcon size={16} /> Navigate
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-[500px] bg-[#1a1a1a] border-white/10 text-white p-0 overflow-hidden">
+                            <DialogHeader className="p-6 pb-0">
+                                <DialogTitle className="text-2xl font-bold">Search History</DialogTitle>
+                                <DialogDescription className="text-gray-400">
+                                    Quickly jump to a specific point in time or search by message.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            <div className="p-6 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="date-filter" className="text-xs text-gray-400 uppercase tracking-wider">Before Date</Label>
+                                        <div className="relative">
+                                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                            <Input
+                                                id="date-filter"
+                                                type="date"
+                                                value={dateFilter}
+                                                onChange={(e) => setDateFilter(e.target.value)}
+                                                className="pl-10 bg-black/50 border-white/10 focus:ring-primary-500"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="author-filter" className="text-xs text-gray-400 uppercase tracking-wider">Author</Label>
+                                        <Select value={authorFilter} onValueChange={setAuthorFilter}>
+                                            <SelectTrigger id="author-filter" className="bg-black/50 border-white/10 focus:ring-primary-500">
+                                                <SelectValue placeholder="All Authors" />
+                                            </SelectTrigger>
+                                            <SelectContent className="bg-[#1a1a1a] border-white/10 text-white">
+                                                <SelectItem value="all">All Authors</SelectItem>
+                                                {authors.map(author => (
+                                                    <SelectItem key={author} value={author}>{author}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="search-query" className="text-xs text-gray-400 uppercase tracking-wider">Search Message</Label>
+                                    <div className="relative">
+                                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
+                                        <Input
+                                            id="search-query"
+                                            placeholder="Fix bug, initial..."
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter' && filteredCommits.length > 0) {
+                                                    handleCommitSelect(filteredCommits[0].originalIndex);
+                                                }
+                                            }}
+                                            className="pl-10 bg-black/50 border-white/10 focus:ring-primary-500"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t border-white/10">
+                                    <Label className="text-xs text-gray-400 uppercase tracking-wider mb-2 block">
+                                        Results ({filteredCommits.length})
+                                    </Label>
+                                    <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar space-y-2">
+                                        {filteredCommits.length > 0 ? (
+                                            filteredCommits.map((commit) => (
+                                                <button
+                                                    key={commit.hash}
+                                                    onClick={() => handleCommitSelect(commit.originalIndex)}
+                                                    className={`w-full text-left p-3 rounded-lg transition-all border ${commit.originalIndex === currentIndex
+                                                        ? 'bg-primary/20 border-primary/30 text-white'
+                                                        : 'bg-white/5 border-transparent hover:bg-white/10 text-gray-300'
+                                                        }`}
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="font-mono text-xs text-primary-400">{commit.shortHash}</span>
+                                                        <span className="text-[10px] text-gray-500">{formatDate(commit.timestamp)}</span>
+                                                    </div>
+                                                    <p className="text-sm font-medium line-clamp-1">{commit.message}</p>
+                                                    <p className="text-[11px] text-gray-500 mt-1">{commit.author}</p>
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 text-gray-500">
+                                                <SearchIcon className="mx-auto mb-2 opacity-20" size={32} />
+                                                <p>No commits found matching filter</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                 <div className="text-right">
                     <div className="text-2xl font-bold text-primary-400">
@@ -163,6 +299,6 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                     </select>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }

@@ -124,7 +124,7 @@ export default function FileViewer({ content, filePath }) {
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-auto scrollbar-thin bg-dark-900/50">
+            <div className="flex-1 overflow-auto scrollbar-thin bg-black">
                 {content ? (
                     <div className="p-4 text-sm leading-relaxed">
                         <code
@@ -133,7 +133,7 @@ export default function FileViewer({ content, filePath }) {
                         />
                     </div>
                 ) : (
-                    <div className="flex items-center justify-center h-full text-gray-600 bg-[#3d2d00]">
+                    <div className="flex items-center justify-center h-full text-gray-600 bg-black">
                         <div className="text-center">
                             <File className="mx-auto mb-4 opacity-20" size={48} />
                             <p>Select a file to view its contents</p>
