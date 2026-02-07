@@ -26,9 +26,9 @@ function App() {
     <>
       <div className='flex flex-col items-center justify-center h-screen p-10 gap-10  w-full'>
         <div>
-          <h1 className='text-9xl font-bold text-center mb-8'>What if?</h1>
-          <h2 className='text-4xl font-bold text-center mb-8'>You could travel back in time</h2>
-          <p className='text-2xl font-bold text-center mb-8'>Just enter your project's directory and we'll show you your commit history</p>
+          <h1 className='text-9xl font-bold text-center mb-8'>Im in the thick of it</h1>
+          <h2 className='text-4xl font-bold text-center mb-8'>Everybody knows</h2>
+          <p className='text-2xl font-bold text-center mb-8'>They know me when it snows i skied in and they froze</p>
         </div>
         <div className="w-full max-w-4xl relative group flex items-center">
           <input

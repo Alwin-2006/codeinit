@@ -262,44 +262,53 @@ export default function Repo() {
     return (
         <div className="h-screen flex flex-col  text-white overflow-hidden">
             {/* Navbar */}
-            <header className="flex items-center justify-between px-6 py-4  border-white/10 flex-shrink-0">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+            <header className="flex flex-col md:flex-row items-center justify-between px-6 py-4 border-b border-white/5 gap-4 flex-shrink-0">
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20 flex-shrink-0">
                         <FolderGit2 size={24} />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                            <h1 className="text-lg font-bold truncate max-w-[400px]">
+                            <h1 className="text-lg font-bold truncate max-w-[200px] sm:max-w-[400px]">
                                 {repoPath.split('/').pop() || 'Dummy Repo'}
                             </h1>
                             {isMock && (
-                                <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded text-[10px] font-bold uppercase tracking-wider">
-                                    <Info size={10} /> Mock Mode
+                                <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded text-[10px] font-bold uppercase tracking-wider flex-shrink-0">
+                                    <Info size={10} /> Mock
                                 </span>
                             )}
                         </div>
-                        <p className="text-xs text-gray-500 font-mono truncate max-w-[400px]">
+                        <p className="text-xs text-gray-500 font-mono truncate hidden sm:block max-w-[300px]">
                             {repoPath}
                         </p>
                     </div>
                 </div>
 
+                <div className="flex-1 w-full max-w-2xl px-0 md:px-4">
+                    <div className="relative group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary-400 transition-colors" size={20} />
+                        <input
+                            type="text"
+                            className="block w-full pl-12 pr-6 py-2.5 bg-white/5 border border-white/10 rounded-full leading-5 text-white placeholder-gray-500 focus:outline-none focus:bg-white focus:text-black focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500/50 text-base md:text-lg shadow-xl transition-all duration-300"
+                            placeholder="Eg. /home/user/Desktop/codeinit"
+                            value={newdir}
+                            onChange={(e) => setNewdir(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                        />
+                    </div>
+                </div>
 
-                <input
-                    type="text"
-                    className="block w-3/4 pl-6 pr-6 py-3 bg-white border border-transparent rounded-full leading-5 text-black placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-4 focus:ring-[var(--color-secondary)] focus:border-transparent text-xl shadow-2xl transition-all duration-300"
-                    placeholder="Eg. /home/user/Desktop/codeinit"
-                    value={newdir}
-                    onChange={(e) => setNewdir(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                />
-                <div className="flex items-center gap-3">
-                    <div className="hidden md:flex items-center gap-2 px-4 py-2 glass rounded-full text-sm">
+                <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex items-center gap-2 px-4 py-2 glass rounded-full text-sm">
                         <GitBranch size={16} className="text-primary-400" />
                         <span className="font-mono">main</span>
                     </div>
-                    <button className="p-2 hover:bg-white/5 rounded-lg transition-all">
-                        <Search size={20} className="text-gray-400" />
+                    <button
+                        onClick={handleSearch}
+                        className="p-2.5 bg-primary text-primary-foreground hover:bg-primary/90 rounded-full shadow-lg shadow-primary-500/20 transition-all active:scale-95"
+                        title="Analyze Repository"
+                    >
+                        <Search size={20} />
                     </button>
                 </div>
             </header>
