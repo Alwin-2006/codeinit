@@ -10,11 +10,11 @@ router.get('/commits', async (req, res) => {
         const repoPath = req.query.repo || process.env.DEFAULT_REPO || path.join(__dirname, '../frontend');
         const analyzer = new GitAnalyzer(repoPath);
 
-        const isValid = await analyzer.validateRepo();
+        const isValid = await analyzer.isValidRepo();
         if (!isValid) {
             return res.status(400).json({ error: 'This aint a git repository lil bro' });
         }
-        const commits = await analyzer.getCommits();
+        const commits = await analyzer.getCommitHistory();
         res.json({ commits, repository: repoPath });
     } catch (error) {
         console.log("hi hello");
@@ -23,7 +23,7 @@ router.get('/commits', async (req, res) => {
     }
 });
 
-router.get('/tree',async(req,res)=>{
+router.get('/tree', async (req, res) => {
     try {
         const repoPath = req.query.repo || process.env.DEFAULT_REPO || path.join(__dirname, 'frontend');
         const commitHash = req.query.commit;
@@ -42,7 +42,7 @@ router.get('/tree',async(req,res)=>{
     }
 })
 
-router.get('/file',async(req,res)=>{
+router.get('/file', async (req, res) => {
     try {
         const repoPath = req.query.repo || process.env.DEFAULT_REPO || path.join(__dirname, 'frontend');
         const commitHash = req.query.commit;
@@ -69,7 +69,7 @@ router.get('/file',async(req,res)=>{
 });
 
 //finds differences between two commits
-router.get('/diff',async(req,res)=>{
+router.get('/diff', async (req, res) => {
     try {
         const repoPath = req.query.repo || process.env.DEFAULT_REPO || path.join(__dirname, 'frontend');
         const fromCommit = req.query.from;
@@ -97,7 +97,7 @@ router.get('/diff',async(req,res)=>{
     }
 })
 
-router.get('/stats',async(req,res)=>{
+router.get('/stats', async (req, res) => {
     try {
         const repoPath = req.query.repo || process.env.DEFAULT_REPO || path.join(__dirname, 'frontend');
         const commitHash = req.query.commit;
@@ -116,7 +116,7 @@ router.get('/stats',async(req,res)=>{
     }
 })
 
-router.get('/',async(req,res)=>{
+router.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 })
 
