@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input.jsx";
 import { Label } from "@/components/ui/label.jsx";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.jsx";
+import Avatar from './Avatar';
 
 export default function Timeline({ commits, currentIndex, onCommitChange, isPlaying, onPlayPause }) {
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
@@ -91,11 +92,14 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                             {currentCommit.shortHash}
                         </span>
                     </div>
-                    <p className="text-sm text-gray-400 mt-1">
-                        {currentCommit.author} • {formatDate(currentCommit.timestamp)}
-                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                        <Avatar name={currentCommit.author} email={currentCommit.email} size={24} />
+                        <p className="text-sm text-gray-400">
+                            {currentCommit.author} • {formatDate(currentCommit.timestamp)}
+                        </p>
+                    </div>
                     {currentCommit.stats && (
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-2 ml-8">
                             {currentCommit.stats.filesChanged} file(s) changed
                         </p>
                     )}
@@ -108,11 +112,8 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                             </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[500px] bg-[#1a1a1a] border-white/10 text-white p-0 overflow-hidden">
-                            <DialogHeader className="p-6 pb-0">
-                                <DialogTitle className="text-2xl font-bold">Search History</DialogTitle>
-                                <DialogDescription className="text-gray-400">
-                                    Quickly jump to a specific point in time or search by message.
-                                </DialogDescription>
+                            <DialogHeader className="p-6 pb-0 flex flex-col justify-between">
+                                <DialogTitle className="text-2xl font-bold flex justify-center">Options</DialogTitle>
                             </DialogHeader>
 
                             <div className="p-6 space-y-4">
@@ -185,7 +186,10 @@ export default function Timeline({ commits, currentIndex, onCommitChange, isPlay
                                                         <span className="text-[10px] text-gray-500">{formatDate(commit.timestamp)}</span>
                                                     </div>
                                                     <p className="text-sm font-medium line-clamp-1">{commit.message}</p>
-                                                    <p className="text-[11px] text-gray-500 mt-1">{commit.author}</p>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <Avatar name={commit.author} email={commit.email} size={18} />
+                                                        <p className="text-[11px] text-gray-500">{commit.author}</p>
+                                                    </div>
                                                 </button>
                                             ))
                                         ) : (
